@@ -3,38 +3,81 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-"""
-# Welcome to Streamlit!
+import engine as dp
+import os 
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:.
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+st.set_page_config(layout='wide')
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+def main():
+    # load_dotenv()
+    # st.write (os.getlogin())
+    if "conversation" not in st.session_state:
+        st.session_state.conversation = None
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = None
+   
+    st.title(':orange[Translation using OpenAI] :page_facing_up')
 
-num_points = st.slider("Number of points in spiral", 1, 10000, 1100)
-num_turns = st.slider("Number of turns in spiral", 1, 300, 31)
+    # user_question = st.text_input("**Ask a question about your :blue[documents]:**")
+    # if user_question:
+    #     handle_userinput(user_question)
 
-indices = np.linspace(0, 1, num_points)
-theta = 2 * np.pi * num_turns * indices
-radius = indices
+    # you can create columns to better manage the flow of your page
+    # this command makes 2 columns of equal width
+    col1, col2 = st.columns(2)
 
-x = radius * np.cos(theta)
-y = radius * np.sin(theta)
+    with col1:
+        logtxtbox = st.empty()
+        logtxt = ''
+        logtxtbox.text_area("Original Text: ",logtxt, height = 500)
 
-df = pd.DataFrame({
-    "x": x,
-    "y": y,
-    "idx": indices,
-    "rand": np.random.randn(num_points),
-})
+    with col2:
+        translated_txt_box = st.empty()
+        translated_txt = ''
+        translated_txt_box.text_area("Translation: ",translated_txt, height = 500)
 
-st.altair_chart(alt.Chart(df, height=700, width=700)
-    .mark_point(filled=True)
-    .encode(
-        x=alt.X("x", axis=None),
-        y=alt.Y("y", axis=None),
-        color=alt.Color("idx", legend=None, scale=alt.Scale()),
-        size=alt.Size("rand", legend=None, scale=alt.Scale(range=[1, 150])),
-    ))
+    
+    with st.sidebar:
+        st.subheader(":orange[Your documents]")
+
+        uploaded_file = st.file_uploader(":blue[Upload File]"
+                                     ,type=['txt','docx','pdf']
+                                     ,accept_multiple_files=False)
+        # uploaded_files = st.file_uploader(
+        #         ":blue[Upload your files here and click on 'Process Document']. Accepts :red[pdf files only.]",
+        #         accept_multiple_files=False)
+        
+        if st.button("Process Document"):
+            # if uploaded_file:
+            if uploaded_file is not None:
+                file_details = {"Filename":uploaded_file.name,"FileType":uploaded_file.type,"FileSize":uploaded_file.size}
+                st.write(file_details)
+                with st.spinner("Processing your document(s)"):
+                    # get pdf text
+                    raw_text = dp.extract_text(uploaded_file)
+
+                    # get the text chunks
+                    text_chunks = dp.chunk_text(raw_text)
+                   
+                    counter = 0
+
+                    for txt in text_chunks:
+                        counter += 1
+                        logtxt += txt # + '\n'
+                        with col1:
+                            logtxtbox.text_area("Original: ", logtxt, height=500)
+
+                        txt1 = dp.translate_text(txt)
+                        
+                        translated_txt += txt1 + '\n' #'****Counter [' + str(counter) + '] \n' +
+                        
+                        with col2:
+                            translated_txt_box.text_area("Translation:", translated_txt, height=500)
+                        # print(txt);
+                        # st.text_input("Original Text", txt)
+
+                    # create conversation chain
+                    # st.session_state.conversation = mp.get_chain(vectorstore)
+                            
+if __name__ == '__main__':
+    main()

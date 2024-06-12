@@ -1,3 +1,5 @@
-altair
-pandas
+langchain
+docx2txt
+pypdf2
+openai
 streamlit
