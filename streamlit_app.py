@@ -38,43 +38,36 @@ def main():
 
     
     with st.sidebar:
+        option = st.selectbox("Target Language:", ("English", "French", "Chinese"))
+
         st.subheader(":orange[Your documents]")
 
         uploaded_file = st.file_uploader(":blue[Upload File]"
                                      ,type=['txt','docx','pdf']
                                      ,accept_multiple_files=False)
-        # uploaded_files = st.file_uploader(
-        #         ":blue[Upload your files here and click on 'Process Document']. Accepts :red[pdf files only.]",
-        #         accept_multiple_files=False)
         
         if st.button("Process Document"):
             # if uploaded_file:
             if uploaded_file is not None:
                 file_details = {"Filename":uploaded_file.name,"FileType":uploaded_file.type,"FileSize":uploaded_file.size}
-                st.write(file_details)
+                # st.write(file_details)
                 with st.spinner("Processing your document(s)"):
-                    # get pdf text
+                    
                     raw_text = dp.extract_text(uploaded_file)
-
-                    # get the text chunks
                     text_chunks = dp.chunk_text(raw_text)
-                   
                     counter = 0
-
                     for txt in text_chunks:
                         counter += 1
-                        logtxt += txt # + '\n'
+                        logtxt += txt + '\n'
                         with col1:
                             logtxtbox.text_area("Original: ", logtxt, height=500)
 
-                        txt1 = dp.translate_text(txt)
+                        txt1 = dp.translate_text(txt, option)
                         
                         translated_txt += txt1 + '\n' #'****Counter [' + str(counter) + '] \n' +
                         
                         with col2:
                             translated_txt_box.text_area("Translation:", translated_txt, height=500)
-                        # print(txt);
-                        # st.text_input("Original Text", txt)
 
                     # create conversation chain
                     # st.session_state.conversation = mp.get_chain(vectorstore)
